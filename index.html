@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date Portal | Reserve an Experience</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,800;1,400;1,700&display=swap" rel="stylesheet">
+    <!-- JS Confetti Engine -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        themeRose: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            200: '#fecdd3',
+                            300: '#fda4af',
+                            400: '#fb7185',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            700: '#be123c',
+                            800: '#9f1239',
+                            900: '#881337',
+                            950: '#4c0519',
+                        },
+                        velvetDark: '#0a0508',
+                        cardDark: '#150a12',
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 5s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-6px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0508; }
+        ::-webkit-scrollbar-thumb { background: #be123c; border-radius: 3px; }
+        
+        .glass-card {
+            background: rgba(21, 10, 18, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(244, 63, 94, 0.2);
+        }
+        
+        .glass-interactive {
+            background: rgba(30, 14, 25, 0.65);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-interactive:hover {
+            border-color: rgba(244, 63, 94, 0.5);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px -10px rgba(244, 63, 94, 0.3);
+        }
+
+        .gradient-avatar-border {
+            position: relative;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, #f43f5e, #be123c, #4c0519);
+            padding: 3px;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-velvetDark text-rose-50 font-sans min-h-screen selection:bg-themeRose-500 selection:text-white pb-24 overflow-x-hidden">
+
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="absolute -top-32 -left-32 w-96 h-96 bg-themeRose-600/20 rounded-full blur-[130px] animate-pulse-slow"></div>
+        <div class="absolute top-1/3 -right-32 w-96 h-96 bg-purple-900/20 rounded-full blur-[130px]"></div>
+        <div class="absolute -bottom-20 left-1/3 w-80 h-80 bg-themeRose-900/20 rounded-full blur-[110px]"></div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app" class="relative z-10 max-w-xl mx-auto px-4 pt-4 sm:pt-6">
+
+        <header class="flex justify-between items-center mb-6 py-2.5 px-4 glass-card rounded-full shadow-lg">
+            <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-themeRose-500 animate-ping"></span>
+                <span id="nav-brand-title" class="font-serif italic font-bold tracking-wide text-rose-100 text-base sm:text-lg">Date Portal</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <!-- Database Sync Status Indicator -->
+                <div id="db-status-badge" class="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-semibold flex items-center gap-1.5" title="Database Connection Status">
+                    <i class="fa-solid fa-database text-[9px]"></i>
+                    <span id="db-status-text">Connecting...</span>
+                </div>
+
+                <button onclick="shareProfileLink()" class="p-2 rounded-full hover:bg-white/10 text-rose-200 transition text-xs flex items-center gap-1.5 px-3 border border-white/10" title="Copy Profile Link">
+                    <i class="fa-solid fa-share-nodes text-themeRose-400"></i>
+                    <span class="hidden sm:inline">Share</span>
+                </button>
+                <button id="admin-toggle-btn" onclick="toggleAdminMode()" class="px-3.5 py-1.5 rounded-full bg-themeRose-600/30 hover:bg-themeRose-600/50 text-rose-200 border border-themeRose-500/40 text-xs font-semibold transition flex items-center gap-1.5">
+                    <i id="admin-icon" class="fa-solid fa-sliders text-amber-400 text-xs"></i>
+                    <span id="admin-btn-text">Owner Login</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Setup/Onboarding Banner -->
+        <div id="onboarding-banner" class="hidden mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center justify-between gap-3 shadow-lg">
+            <div class="flex items-center gap-2.5">
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-400 text-base shrink-0"></i>
+                <span><strong>Setup Profile:</strong> Customize your name, photo, and available date experiences!</span>
+            </div>
+            <button onclick="switchToAdminTab('settings')" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl text-xs shrink-0 transition">
+                Configure
+            </button>
+        </div>
+
+        <main id="public-view" class="space-y-6 transition-all duration-500">
+
+            <!-- Profile Header Card -->
+            <section class="glass-card rounded-3xl p-6 text-center relative overflow-hidden shadow-2xl border border-themeRose-500/20">
+                
+                <!-- Availability Tag -->
+                <div class="absolute top-4 right-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 backdrop-blur-md">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="status-tag-text">Open for Dates</span>
+                </div>
+
+                <!-- Avatar Box -->
+                <div class="relative w-36 h-36 sm:w-40 sm:h-40 mx-auto mb-4 mt-2">
+                    <div class="gradient-avatar-border w-full h-full shadow-2xl">
+                        <div class="w-full h-full rounded-full overflow-hidden bg-black relative group">
+                            <img id="display-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80" 
+                                 alt="Profile Photo" 
+                                 class="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+                                 onerror="this.src='https://placehold.co/400x400/881337/ffffff?text=Your+Photo'">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Name & Bio Details -->
+                <h1 class="text-3xl font-serif font-bold tracking-tight text-white flex items-center justify-center gap-2">
+                    <span id="display-name">Your Name</span><span id="display-age-wrapper">, <span id="display-age" class="text-themeRose-300 font-sans font-light">23</span></span>
+                    <i class="fa-solid fa-circle-check text-themeRose-500 text-base" title="Verified Profile"></i>
+                </h1>
+
+                <p class="text-rose-200/80 text-xs sm:text-sm mt-1 flex items-center justify-center gap-1.5 font-medium">
+                    <i class="fa-solid fa-location-dot text-themeRose-500"></i> <span id="display-location">Nairobi, Kenya</span>
+                </p>
+
+                <p id="display-tagline" class="text-xs uppercase tracking-widest font-semibold text-themeRose-400 mt-2">Coffee & Art Enthusiast</p>
+                <p id="display-bio" class="text-gray-300 text-sm mt-2.5 leading-relaxed max-w-md mx-auto italic font-light px-2">
+                    "Welcome to my booking portal! Choose one of my curated date options below to propose a meeting."
+                </p>
+
+                <!-- Interest Badges -->
+                <div id="display-interests" class="flex flex-wrap justify-center gap-2 mt-4">
+                    <!-- Dynamic badges populated here -->
+                </div>
+
+                <!-- Social Links -->
+                <div class="flex justify-center gap-3 mt-5 pt-4 border-t border-white/10">
+                    <a id="display-ig-link" href="#" target="_blank" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 hover:border-themeRose-500/50 hover:bg-themeRose-500/20 text-rose-200 flex items-center justify-center transition text-sm">
+                        <i class="fa-brands fa-instagram"></i>
+                    </a>
+                    <a id="display-wa-link" href="#" target="_blank" class="w-9 h-9 rounded-full bg-white/5 border border-white/10 hover:border-emerald-500/50 hover:bg-emerald-500/20 text-rose-200 flex items-center justify-center transition text-sm">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Available Date Packages Grid -->
+            <section class="space-y-4">
+                <div class="flex items-center justify-between px-1">
+                    <div>
+                        <h2 class="text-xl font-serif font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-heart text-themeRose-500 text-sm"></i> Available Date Options
+                        </h2>
+                        <p class="text-xs text-rose-300/70 mt-0.5">Select an option to ask me out</p>
+                    </div>
+                </div>
+
+                <div id="public-packages-grid" class="grid grid-cols-1 gap-3.5">
+                    <!-- Dynamic Package Cards populated here -->
+                </div>
+            </section>
+        </main>
+
+        <main id="admin-view" class="hidden space-y-6">
+            
+            <div id="admin-main-panel" class="glass-card rounded-3xl p-5 border border-themeRose-500/30 bg-cardDark/85 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-white/10">
+                    <div>
+                        <h2 class="text-xl font-serif font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-amber-400"></i> Owner Control Panel
+                        </h2>
+                        <p class="text-xs text-rose-200/70 mt-0.5">Manage incoming proposals, profile, and date packages</p>
+                    </div>
+                    <button onclick="exitAdminView()" class="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full text-rose-200 transition">
+                        Exit
+                    </button>
+                </div>
+
+                <!-- Stats Counters -->
+                <div class="grid grid-cols-3 gap-2 my-2 text-center">
+                    <div class="bg-black/40 p-2.5 rounded-2xl border border-white/5">
+                        <span id="stat-pending" class="block text-xl font-bold text-amber-400">0</span>
+                        <span class="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Pending</span>
+                    </div>
+                    <div class="bg-black/40 p-2.5 rounded-2xl border border-white/5">
+                        <span id="stat-accepted" class="block text-xl font-bold text-emerald-400">0</span>
+                        <span class="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Accepted</span>
+                    </div>
+                    <div class="bg-black/40 p-2.5 rounded-2xl border border-white/5">
+                        <span id="stat-declined" class="block text-xl font-bold text-rose-400">0</span>
+                        <span class="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Declined</span>
+                    </div>
+                </div>
+
+                <!-- Dashboard Tabs -->
+                <div class="flex border-b border-white/10 gap-2 overflow-x-auto hide-scrollbar">
+                    <button id="admin-tab-requests" onclick="switchToAdminTab('requests')" class="pb-2.5 px-3 text-xs sm:text-sm font-semibold text-themeRose-400 border-b-2 border-themeRose-500 whitespace-nowrap">
+                        <i class="fa-solid fa-inbox mr-1"></i> Requests (<span id="req-count">0</span>)
+                    </button>
+                    <button id="admin-tab-packages" onclick="switchToAdminTab('packages')" class="pb-2.5 px-3 text-xs sm:text-sm font-semibold text-gray-400 hover:text-rose-300 whitespace-nowrap">
+                        <i class="fa-solid fa-heart-pulse mr-1"></i> Date Experiences
+                    </button>
+                    <button id="admin-tab-settings" onclick="switchToAdminTab('settings')" class="pb-2.5 px-3 text-xs sm:text-sm font-semibold text-gray-400 hover:text-rose-300 whitespace-nowrap">
+                        <i class="fa-solid fa-user-gear mr-1"></i> Profile Setup
+                    </button>
+                </div>
+
+                <!-- TAB 1: Proposals Inbox -->
+                <div id="admin-sec-requests" class="space-y-3">
+                    <div class="flex items-center gap-1.5 pb-1">
+                        <button onclick="filterRequests('all')" class="req-filter-btn px-3 py-1 rounded-full text-xs font-medium bg-themeRose-600 text-white" data-filter="all">All</button>
+                        <button onclick="filterRequests('pending')" class="req-filter-btn px-3 py-1 rounded-full text-xs font-medium bg-white/5 text-gray-300 hover:bg-white/10" data-filter="pending">Pending</button>
+                        <button onclick="filterRequests('accepted')" class="req-filter-btn px-3 py-1 rounded-full text-xs font-medium bg-white/5 text-gray-300 hover:bg-white/10" data-filter="accepted">Accepted</button>
+                        <button onclick="filterRequests('declined')" class="req-filter-btn px-3 py-1 rounded-full text-xs font-medium bg-white/5 text-gray-300 hover:bg-white/10" data-filter="declined">Declined</button>
+                    </div>
+
+                    <div id="requests-list-container" class="space-y-3">
+                        <!-- Dynamic proposals populated here -->
+                    </div>
+                </div>
+
+                <!-- TAB 2: Date Options Editor -->
+                <div id="admin-sec-packages" class="hidden space-y-4">
+                    <button onclick="togglePackageForm()" class="w-full py-2.5 border-2 border-dashed border-themeRose-500/40 rounded-2xl text-themeRose-300 hover:bg-themeRose-500/10 transition text-xs font-semibold flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Create New Date Option
+                    </button>
+
+                    <!-- Add Package Form -->
+                    <form id="package-form" onsubmit="handleSavePackage(event)" class="hidden glass-card p-4 rounded-2xl border border-themeRose-500/30 space-y-3 bg-black/60">
+                        <h4 class="text-xs font-bold text-themeRose-300 uppercase tracking-wider">New Date Option</h4>
+                        
+                        <div>
+                            <label class="block text-[11px] text-gray-300 mb-1">Title & Emoji *</label>
+                            <input type="text" id="pkg-input-title" placeholder="e.g. 🍷 Wine Tasting & Dinner" required class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-[11px] text-gray-300 mb-1">Description *</label>
+                            <textarea id="pkg-input-desc" rows="2" placeholder="Describe what you enjoy for this date option..." required class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500 resize-none"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] text-gray-300 mb-1">Vibe Tag *</label>
+                                <input type="text" id="pkg-input-vibe" placeholder="e.g. Romantic & Cozy" required class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-gray-300 mb-1">FontAwesome Icon</label>
+                                <input type="text" id="pkg-input-icon" placeholder="fa-wine-glass" class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500">
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end gap-2 pt-2">
+                            <button type="button" onclick="togglePackageForm()" class="px-3 py-1.5 rounded-xl bg-white/10 text-xs text-gray-300">Cancel</button>
+                            <button type="submit" class="px-4 py-1.5 rounded-xl bg-themeRose-600 hover:bg-themeRose-500 text-white font-semibold text-xs transition">Save Option</button>
+                        </div>
+                    </form>
+
+                    <div id="admin-packages-list" class="space-y-2">
+                        <!-- Dynamic list of packages -->
+                    </div>
+                </div>
+
+                <!-- TAB 3: Profile Settings Form -->
+                <div id="admin-sec-settings" class="hidden space-y-4">
+                    <form onsubmit="handleSaveProfile(event)" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-medium text-rose-200/80 mb-1">Your Name *</label>
+                                <input type="text" id="edit-name" required placeholder="e.g. Sarah" class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-rose-200/80 mb-1">Age</label>
+                                <input type="number" id="edit-age" placeholder="23" class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-medium text-rose-200/80 mb-1">City / Location *</label>
+                                <input type="text" id="edit-location" required placeholder="e.g. Nairobi, Kenya" class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-rose-200/80 mb-1">WhatsApp Phone (+code) *</label>
+                                <input type="text" id="edit-phone" required placeholder="+254712345678" class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-rose-200/80 mb-1">Profile Photo URL</label>
+                            <input type="url" id="edit-avatar" placeholder="https://..." class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-rose-200/80 mb-1">Tagline / Headline</label>
+                            <input type="text" id="edit-tagline" placeholder="Coffee enthusiast & Art gallery lover" class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-rose-200/80 mb-1">Short Bio Pitch *</label>
+                            <textarea id="edit-bio" rows="2.5" required placeholder="Introduce yourself and what kind of dates you enjoy..." class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500 resize-none"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-rose-200/80 mb-1">Interests/Badges (comma separated)</label>
+                            <input type="text" id="edit-interests" placeholder="🎨 Museums, ☕ Flat Whites, 🍷 Wine, 📚 Books" class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-rose-200/80 mb-1">Instagram Profile Link</label>
+                            <input type="text" id="edit-ig" placeholder="https://instagram.com/yourhandle" class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500">
+                        </div>
+
+                        <div class="pt-2 border-t border-white/10 flex justify-between items-center">
+                            <button type="button" onclick="resetToDefaults()" class="text-[11px] text-rose-400 hover:text-rose-300">
+                                <i class="fa-solid fa-rotate-left mr-1"></i> Reset Data
+                            </button>
+                            <button type="submit" class="px-5 py-2.5 bg-themeRose-600 hover:bg-themeRose-500 text-white font-bold rounded-xl text-xs transition shadow-lg">
+                                Save Profile
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </main>
+
+        <div id="booking-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+            <div class="glass-card bg-cardDark/95 border border-themeRose-500/30 w-full max-w-lg rounded-3xl p-5 sm:p-6 relative shadow-2xl overflow-y-auto max-h-[90vh]">
+                <button onclick="closeBookingModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+                <div id="modal-step-form">
+                    <div class="text-center mb-5">
+                        <span class="inline-block p-2.5 rounded-2xl bg-themeRose-500/20 text-themeRose-400 mb-2">
+                            <i class="fa-solid fa-calendar-heart text-xl"></i>
+                        </span>
+                        <h3 class="text-2xl font-serif font-bold text-white">Ask <span id="modal-owner-name">Her</span> Out</h3>
+                        <p class="text-xs text-rose-200/70">Fill out this date proposal card to submit your request!</p>
+                    </div>
+
+                    <form id="booking-form" onsubmit="handleBookingPreview(event)" class="space-y-3.5">
+                        <div class="bg-themeRose-950/60 border border-themeRose-500/30 p-3 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] uppercase tracking-wider text-themeRose-400 font-bold block">Selected Date Experience</span>
+                                <span id="modal-package-title" class="text-sm font-bold text-white">☕ Coffee & Chat</span>
+                            </div>
+                            <i class="fa-solid fa-heart text-themeRose-500 text-lg"></i>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-rose-200/80 mb-1">Your Full Name *</label>
+                            <input type="text" id="req-name" required placeholder="e.g. Alex Mercer" class="w-full bg-black/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-themeRose-500">
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-rose-200/80 mb-1">WhatsApp / Phone *</label>
+                                <input type="text" id="req-contact" required placeholder="+254712345678" class="w-full bg-black/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-themeRose-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-rose-200/80 mb-1">Instagram Handle</label>
+                                <input type="text" id="req-ig" placeholder="@your_handle" class="w-full bg-black/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-themeRose-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-rose-200/80 mb-1">Preferred Date *</label>
+                                <input type="date" id="req-date" required class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-rose-200/80 mb-1">Preferred Time *</label>
+                                <select id="req-time" required class="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-themeRose-500">
+                                    <option value="12:00 PM">12:00 PM (Lunch)</option>
+                                    <option value="03:00 PM">03:00 PM (Afternoon)</option>
+                                    <option value="06:00 PM">06:00 PM (Sunset / Drinks)</option>
+                                    <option value="08:00 PM">08:00 PM (Dinner)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-rose-200/80 mb-1">Proposed Venue / Spot *</label>
+                            <input type="text" id="req-venue" required placeholder="e.g. Java House or Cafe Villa" class="w-full bg-black/50 border border-white/10 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-themeRose-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-rose-200/80 mb-1">Your Pitch Note / Message *</label>
+                            <textarea id="req-pitch" rows="2.5" required placeholder="Share why you'd love to take her out..." class="w-full bg-black/50 border border-white/10 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-themeRose-500 resize-none"></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 bg-gradient-to-r from-themeRose-600 to-themeRose-500 hover:from-themeRose-500 hover:to-themeRose-600 text-white font-semibold rounded-2xl text-xs sm:text-sm shadow-lg shadow-themeRose-600/30 transition transform active:scale-98 flex items-center justify-center gap-2">
+                            <span>Review Proposal</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Step 2: Review Proposal -->
+                <div id="modal-step-preview" class="hidden space-y-4">
+                    <div class="text-center">
+                        <span class="inline-block p-2 rounded-full bg-amber-500/20 text-amber-300 text-xs font-semibold mb-1">
+                            <i class="fa-solid fa-eye mr-1"></i> Review Proposal
+                        </span>
+                        <h3 class="text-xl font-serif font-bold text-white">Confirm Details</h3>
+                    </div>
+
+                    <div class="bg-black/50 border border-white/10 rounded-2xl p-4 space-y-2.5 text-xs">
+                        <div class="flex justify-between border-b border-white/10 pb-2">
+                            <span class="text-gray-400">Date Experience</span>
+                            <span id="prev-pkg" class="font-bold text-themeRose-300"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">From</span>
+                            <span id="prev-name" class="text-white font-semibold"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Contact / IG</span>
+                            <span id="prev-contact" class="text-white"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Date & Time</span>
+                            <span id="prev-datetime" class="text-white font-medium"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Venue</span>
+                            <span id="prev-venue" class="text-white font-medium"></span>
+                        </div>
+                        <div class="pt-2 border-t border-white/10">
+                            <span class="text-gray-400 block mb-1">Pitch Note:</span>
+                            <p id="prev-pitch" class="text-rose-100 italic bg-themeRose-950/40 p-2.5 rounded-xl border border-themeRose-500/20"></p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="backToFormStep()" class="w-1/3 py-2.5 bg-white/10 hover:bg-white/20 text-xs font-semibold text-gray-300 rounded-xl transition">
+                            Edit
+                        </button>
+                        <button onclick="confirmAndSendRequest()" class="w-2/3 py-2.5 bg-themeRose-600 hover:bg-themeRose-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-themeRose-600/30 transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-paper-plane"></i> Submit Proposal
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="success-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+            <div class="glass-card bg-cardDark border border-themeRose-500/40 w-full max-w-sm rounded-3xl p-6 text-center space-y-4 shadow-2xl">
+                <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-3xl">
+                    <i class="fa-solid fa-heart-circle-check"></i>
+                </div>
+                <h3 class="text-2xl font-serif font-bold text-white">Proposal Submitted!</h3>
+                <p class="text-xs text-gray-300 leading-relaxed">
+                    Your request has been saved to her database inbox! You can also send her an instant WhatsApp message right now.
+                </p>
+                <div class="space-y-2 pt-2">
+                    <a id="success-wa-btn" href="#" target="_blank" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30">
+                        <i class="fa-brands fa-whatsapp text-base"></i> Send Message via WhatsApp
+                    </a>
+                    <button onclick="closeSuccessModal()" class="w-full py-2.5 bg-white/10 hover:bg-white/20 text-gray-300 font-semibold rounded-xl text-xs transition">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Toast -->
+        <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden px-4 py-2.5 rounded-full bg-themeRose-600 text-white text-xs font-semibold shadow-2xl border border-white/20 transition-all duration-300 flex items-center gap-2">
+            <i class="fa-solid fa-circle-info text-rose-200"></i>
+            <span id="toast-message">Notification</span>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Context & Environment variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'date-booking-app';
+        let firebaseConfig = null;
+        
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            try {
+                firebaseConfig = JSON.parse(__firebase_config);
+            } catch(e) {
+                console.warn("Could not parse __firebase_config context:", e);
+            }
+        }
+
+        // Default Starter Data
+        const defaultProfile = {
+            name: "Your Name",
+            age: 23,
+            location: "Nairobi, Kenya",
+            phone: "+254712345678",
+            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
+            tagline: "Coffee & Art Enthusiast",
+            bio: "Welcome to my date portal! Pick one of the available date experiences below to ask me out.",
+            interests: ["☕ Flat Whites", "🎨 Gallery Walks", "🍷 Fine Wine", "📚 Literature"],
+            instagram: "https://instagram.com",
+            configured: false
+        };
+
+        const defaultPackages = [
+            {
+                id: 'pkg_1',
+                title: '☕ Coffee & Pastry Catchup',
+                desc: 'A cozy daytime catch-up over warm flat whites and fresh pastries.',
+                vibe: 'Casual & Warm',
+                icon: 'fa-mug-hot',
+                active: true
+            },
+            {
+                id: 'pkg_2',
+                title: '🍽️ Candlelight Evening Dinner',
+                desc: 'An atmospheric evening with great cuisine, wine, and deep conversation.',
+                vibe: 'Romantic',
+                icon: 'fa-wine-glass-sparkles',
+                active: true
+            },
+            {
+                id: 'pkg_3',
+                title: '🎨 Gallery Walk & Drinks',
+                desc: 'Exploring contemporary art exhibits followed by sunset cocktails.',
+                vibe: 'Creative & Fun',
+                icon: 'fa-palette',
+                active: true
+            }
+        ];
+
+        // Reactive Application State
+        let app, db, auth;
+        let currentUser = null;
+        let useFirebase = false;
+
+        let profileState = { ...defaultProfile };
+        let packagesState = [ ...defaultPackages ];
+        let requestsState = [];
+        
+        let selectedPackage = null;
+        let pendingRequestData = null;
+        let isAdminView = false;
+        let currentFilter = 'all';
+
+        async function initApp() {
+            if (firebaseConfig && firebaseConfig.apiKey) {
+                try {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+
+                    // Firestore Auth handling
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    onAuthStateChanged(auth, (user) => {
+                        currentUser = user;
+                        if (user) {
+                            updateDbStatus('Firestore Synced', 'emerald');
+                            subscribeToFirestore();
+                        }
+                    });
+
+                    useFirebase = true;
+                } catch (err) {
+                    console.error("Firebase Init Failed:", err);
+                    setupLocalStorageFallback();
+                }
+            } else {
+                setupLocalStorageFallback();
+            }
+
+            setupUIListeners();
+            setMinDate();
+        }
+
+        function updateDbStatus(label, color) {
+            const badge = document.getElementById('db-status-badge');
+            const text = document.getElementById('db-status-text');
+            text.innerText = label;
+            if (color === 'emerald') {
+                badge.className = "px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[10px] font-semibold flex items-center gap-1.5";
+            } else {
+                badge.className = "px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-semibold flex items-center gap-1.5";
+            }
+        }
+
+        function setupLocalStorageFallback() {
+            useFirebase = false;
+            updateDbStatus('Local Storage Mode', 'amber');
+            
+            const savedProfile = localStorage.getItem('user_date_profile');
+            const savedPackages = localStorage.getItem('user_date_packages');
+            const savedRequests = localStorage.getItem('user_date_requests');
+
+            profileState = savedProfile ? JSON.parse(savedProfile) : defaultProfile;
+            packagesState = savedPackages ? JSON.parse(savedPackages) : defaultPackages;
+            requestsState = savedRequests ? JSON.parse(savedRequests) : [];
+
+            renderAllViews();
+        }
+
+        function saveLocalStorageState() {
+            if (useFirebase) return;
+            localStorage.setItem('user_date_profile', JSON.stringify(profileState));
+            localStorage.setItem('user_date_packages', JSON.stringify(packagesState));
+            localStorage.setItem('user_date_requests', JSON.stringify(requestsState));
+        }
+
+        // Real-time Firestore Collection Synchronization
+        function subscribeToFirestore() {
+            if (!useFirebase || !db) return;
+
+            // 1. Profile Doc Sync
+            const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'profile', 'main');
+            onSnapshot(profileRef, (snap) => {
+                if (snap.exists()) {
+                    profileState = { ...defaultProfile, ...snap.data() };
+                } else {
+                    setDoc(profileRef, defaultProfile).catch(console.error);
+                }
+                renderProfile();
+            }, (err) => console.error("Profile Error:", err));
+
+            // 2. Packages Collection Sync
+            const packagesColl = collection(db, 'artifacts', appId, 'public', 'data', 'packages');
+            onSnapshot(packagesColl, (snap) => {
+                const pkgs = [];
+                snap.forEach(doc => pkgs.push({ id: doc.id, ...doc.data() }));
+                if (pkgs.length > 0) {
+                    packagesState = pkgs;
+                } else {
+                    defaultPackages.forEach(p => {
+                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'packages', p.id), p);
+                    });
+                }
+                renderPublicPackages();
+                renderAdminPackages();
+            }, (err) => console.error("Packages Error:", err));
+
+            // 3. Requests Collection Sync
+            const requestsColl = collection(db, 'artifacts', appId, 'public', 'data', 'requests');
+            onSnapshot(requestsColl, (snap) => {
+                const reqs = [];
+                snap.forEach(doc => reqs.push({ id: doc.id, ...doc.data() }));
+                reqs.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+                requestsState = reqs;
+                renderRequests();
+            }, (err) => console.error("Requests Error:", err));
+        }
+
+        function renderAllViews() {
+            renderProfile();
+            renderPublicPackages();
+            renderAdminPackages();
+            renderRequests();
+        }
+
+        function renderProfile() {
+            document.getElementById('display-name').innerText = profileState.name || "Your Name";
+            
+            if (profileState.age) {
+                document.getElementById('display-age').innerText = profileState.age;
+                document.getElementById('display-age-wrapper').classList.remove('hidden');
+            } else {
+                document.getElementById('display-age-wrapper').classList.add('hidden');
+            }
+
+            document.getElementById('display-location').innerText = profileState.location || "Your City";
+            document.getElementById('display-avatar').src = profileState.avatar || 'https://placehold.co/400x400/881337/ffffff?text=Your+Photo';
+            document.getElementById('display-tagline').innerText = profileState.tagline || "";
+            document.getElementById('display-bio').innerText = `"${profileState.bio || ''}"`;
+            document.getElementById('nav-brand-title').innerText = profileState.name ? `${profileState.name}.date` : 'Date Portal';
+            document.getElementById('modal-owner-name').innerText = profileState.name || 'Her';
+
+            const interestsContainer = document.getElementById('display-interests');
+            if (profileState.interests && profileState.interests.length > 0) {
+                interestsContainer.innerHTML = profileState.interests.map(tag => `
+                    <span class="px-3 py-1 rounded-full bg-themeRose-950/70 border border-themeRose-500/30 text-rose-200 text-xs font-medium">
+                        ${tag}
+                    </span>
+                `).join('');
+            } else {
+                interestsContainer.innerHTML = '';
+            }
+
+            document.getElementById('display-ig-link').href = profileState.instagram || '#';
+            
+            const cleanPhone = (profileState.phone || '').replace(/[^0-9]/g, '');
+            document.getElementById('display-wa-link').href = cleanPhone ? `https://wa.me/${cleanPhone}` : '#';
+
+            // Populate settings inputs
+            document.getElementById('edit-name').value = profileState.name || '';
+            document.getElementById('edit-age').value = profileState.age || '';
+            document.getElementById('edit-location').value = profileState.location || '';
+            document.getElementById('edit-phone').value = profileState.phone || '';
+            document.getElementById('edit-avatar').value = profileState.avatar || '';
+            document.getElementById('edit-tagline').value = profileState.tagline || '';
+            document.getElementById('edit-bio').value = profileState.bio || '';
+            document.getElementById('edit-interests').value = (profileState.interests || []).join(', ');
+            document.getElementById('edit-ig').value = profileState.instagram || '';
+
+            if (!profileState.configured) {
+                document.getElementById('onboarding-banner').classList.remove('hidden');
+            } else {
+                document.getElementById('onboarding-banner').classList.add('hidden');
+            }
+        }
+
+        function renderPublicPackages() {
+            const grid = document.getElementById('public-packages-grid');
+            const activePackages = packagesState.filter(p => p.active !== false);
+
+            if (activePackages.length === 0) {
+                grid.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">No active date options available right now.</div>`;
+                return;
+            }
+
+            grid.innerHTML = activePackages.map(pkg => `
+                <div onclick="window.openBookingModal('${pkg.id}')" class="glass-interactive p-4 sm:p-5 rounded-2xl cursor-pointer relative overflow-hidden group">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="space-y-1.5 flex-1">
+                            <span class="inline-block px-2.5 py-0.5 rounded-full bg-themeRose-500/10 border border-themeRose-500/30 text-themeRose-300 text-[10px] font-semibold">
+                                ${pkg.vibe}
+                            </span>
+                            <h3 class="text-base sm:text-lg font-bold text-white group-hover:text-themeRose-300 transition">${pkg.title}</h3>
+                            <p class="text-xs text-gray-300 leading-relaxed">${pkg.desc}</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-2xl bg-themeRose-500/20 text-themeRose-400 flex items-center justify-center shrink-0 group-hover:bg-themeRose-600 group-hover:text-white transition shadow-inner">
+                            <i class="fa-solid ${pkg.icon || 'fa-heart'} text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3.5 pt-2.5 border-t border-white/5 flex items-center justify-between text-xs font-semibold text-themeRose-400 group-hover:text-themeRose-300">
+                        <span>Request This Date</span>
+                        <div class="flex items-center gap-1">
+                            <span class="text-[10px] text-gray-400 font-normal">Propose Time</span>
+                            <i class="fa-solid fa-chevron-right text-[10px] transition transform group-hover:translate-x-1"></i>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderRequests() {
+            const container = document.getElementById('requests-list-container');
+
+            const pending = requestsState.filter(r => r.status === 'pending').length;
+            const accepted = requestsState.filter(r => r.status === 'accepted').length;
+            const declined = requestsState.filter(r => r.status === 'declined').length;
+
+            document.getElementById('stat-pending').innerText = pending;
+            document.getElementById('stat-accepted').innerText = accepted;
+            document.getElementById('stat-declined').innerText = declined;
+            document.getElementById('req-count').innerText = requestsState.length;
+
+            let filtered = requestsState;
+            if (currentFilter !== 'all') {
+                filtered = requestsState.filter(r => r.status === currentFilter);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-gray-400 text-xs">No ${currentFilter !== 'all' ? currentFilter : ''} proposals found.</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(req => {
+                let badgeClass = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+                if (req.status === 'accepted') badgeClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+                if (req.status === 'declined') badgeClass = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+
+                const cleanPhone = (req.contact || '').replace(/[^0-9]/g, '');
+                const waAcceptText = encodeURIComponent(`Hey ${req.name}! I saw your date proposal for "${req.pkgTitle}" on ${req.date} at ${req.time} (${req.venue}). I'd love to go! ✨`);
+                const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${waAcceptText}` : `#`;
+
+                return `
+                    <div class="glass-card p-4 rounded-2xl border border-white/10 space-y-3 bg-black/40">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <span class="text-[11px] text-themeRose-300 font-semibold block">${req.pkgTitle}</span>
+                                <h3 class="text-base font-bold text-white">${req.name}</h3>
+                                <div class="flex items-center gap-2 text-xs text-gray-300 mt-0.5">
+                                    <span><i class="fa-solid fa-phone text-[10px] text-themeRose-400 mr-1"></i>${req.contact}</span>
+                                    <span>•</span>
+                                    <span><i class="fa-brands fa-instagram text-[10px] text-themeRose-400 mr-1"></i>${req.ig}</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] px-2.5 py-1 rounded-full border uppercase tracking-wider font-bold ${badgeClass}">
+                                ${req.status}
+                            </span>
+                        </div>
+
+                        <div class="bg-black/40 p-2.5 rounded-xl border border-white/5 space-y-1.5 text-xs">
+                            <div class="flex flex-wrap gap-x-4 gap-y-1 text-gray-300">
+                                <span><i class="fa-regular fa-calendar text-themeRose-400 mr-1"></i>${req.date}</span>
+                                <span><i class="fa-regular fa-clock text-themeRose-400 mr-1"></i>${req.time}</span>
+                                <span><i class="fa-solid fa-location-dot text-themeRose-400 mr-1"></i>${req.venue}</span>
+                            </div>
+                            <p class="text-rose-100 italic pt-1 border-t border-white/5">"${req.pitch}"</p>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-1">
+                            ${req.status === 'pending' ? `
+                                <button onclick="window.updateRequestStatus('${req.id}', 'accepted')" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition">
+                                    <i class="fa-solid fa-check mr-1"></i> Accept
+                                </button>
+                                <button onclick="window.updateRequestStatus('${req.id}', 'declined')" class="flex-1 py-1.5 bg-rose-950 hover:bg-rose-900 text-rose-200 rounded-xl text-xs font-semibold transition border border-rose-500/30">
+                                    <i class="fa-solid fa-xmark mr-1"></i> Decline
+                                </button>
+                            ` : `
+                                ${req.status === 'accepted' ? `
+                                    <a href="${waUrl}" target="_blank" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition text-center flex items-center justify-center gap-1.5">
+                                        <i class="fa-brands fa-whatsapp text-sm"></i> Chat on WhatsApp
+                                    </a>
+                                ` : ''}
+                                <button onclick="window.deleteRequest('${req.id}')" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-gray-300 rounded-xl text-xs transition">
+                                    Delete
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAdminPackages() {
+            const container = document.getElementById('admin-packages-list');
+            
+            container.innerHTML = packagesState.map(pkg => `
+                <div class="bg-black/40 border border-white/10 p-3 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-bold text-white">${pkg.title}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full ${pkg.active !== false ? 'bg-emerald-500/20 text-emerald-300' : 'bg-gray-500/20 text-gray-400'}">
+                                ${pkg.active !== false ? 'Active' : 'Inactive'}
+                            </span>
+                        </div>
+                        <span class="text-xs text-gray-400 block">${pkg.vibe}</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="window.togglePackageActive('${pkg.id}')" class="p-2 text-gray-400 hover:text-white text-xs">
+                            <i class="fa-solid ${pkg.active !== false ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                        </button>
+                        <button onclick="window.deletePackage('${pkg.id}')" class="p-2 text-rose-400 hover:text-rose-300 text-xs">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setupUIListeners() {
+            window.openBookingModal = (pkgId) => {
+                selectedPackage = packagesState.find(p => p.id === pkgId);
+                if (!selectedPackage) return;
+
+                document.getElementById('modal-package-title').innerText = selectedPackage.title;
+                document.getElementById('modal-step-form').classList.remove('hidden');
+                document.getElementById('modal-step-preview').classList.add('hidden');
+                document.getElementById('booking-modal').classList.remove('hidden');
+            };
+
+            window.closeBookingModal = () => {
+                document.getElementById('booking-modal').classList.add('hidden');
+                document.getElementById('booking-form').reset();
+            };
+
+            window.handleBookingPreview = (e) => {
+                e.preventDefault();
+
+                pendingRequestData = {
+                    pkgTitle: selectedPackage.title,
+                    name: document.getElementById('req-name').value.trim(),
+                    contact: document.getElementById('req-contact').value.trim(),
+                    ig: document.getElementById('req-ig').value.trim() || 'N/A',
+                    date: document.getElementById('req-date').value,
+                    time: document.getElementById('req-time').value,
+                    venue: document.getElementById('req-venue').value.trim(),
+                    pitch: document.getElementById('req-pitch').value.trim(),
+                    status: 'pending',
+                    timestamp: new Date().toISOString()
+                };
+
+                document.getElementById('prev-pkg').innerText = pendingRequestData.pkgTitle;
+                document.getElementById('prev-name').innerText = pendingRequestData.name;
+                document.getElementById('prev-contact').innerText = `${pendingRequestData.contact} (${pendingRequestData.ig})`;
+                document.getElementById('prev-datetime').innerText = `${pendingRequestData.date} at ${pendingRequestData.time}`;
+                document.getElementById('prev-venue').innerText = pendingRequestData.venue;
+                document.getElementById('prev-pitch').innerText = pendingRequestData.pitch;
+
+                document.getElementById('modal-step-form').classList.add('hidden');
+                document.getElementById('modal-step-preview').classList.remove('hidden');
+            };
+
+            window.backToFormStep = () => {
+                document.getElementById('modal-step-preview').classList.add('hidden');
+                document.getElementById('modal-step-form').classList.remove('hidden');
+            };
+
+            window.confirmAndSendRequest = async () => {
+                if (!pendingRequestData) return;
+
+                if (useFirebase && db) {
+                    try {
+                        const requestsColl = collection(db, 'artifacts', appId, 'public', 'data', 'requests');
+                        await addDoc(requestsColl, pendingRequestData);
+                    } catch (err) {
+                        console.error("Firestore Add Request Error:", err);
+                    }
+                } else {
+                    pendingRequestData.id = 'req_' + Date.now();
+                    requestsState.unshift(pendingRequestData);
+                    saveLocalStorageState();
+                    renderRequests();
+                }
+
+                // WhatsApp Instant Bridge link for Visitor
+                const ownerPhone = (profileState.phone || '').replace(/[^0-9]/g, '');
+                const waVisitorMsg = encodeURIComponent(`Hey ${profileState.name || ''}! I just sent a date proposal for "${pendingRequestData.pkgTitle}" on ${pendingRequestData.date} at ${pendingRequestData.time}. My name is ${pendingRequestData.name}! ✨`);
+                const waBtn = document.getElementById('success-wa-btn');
+                
+                if (ownerPhone) {
+                    waBtn.href = `https://wa.me/${ownerPhone}?text=${waVisitorMsg}`;
+                    waBtn.classList.remove('hidden');
+                } else {
+                    waBtn.classList.add('hidden');
+                }
+
+                window.closeBookingModal();
+                document.getElementById('success-modal').classList.remove('hidden');
+
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+                }
+            };
+
+            window.closeSuccessModal = () => {
+                document.getElementById('success-modal').classList.add('hidden');
+            };
+
+            window.toggleAdminMode = () => {
+                isAdminView = !isAdminView;
+                const pubView = document.getElementById('public-view');
+                const admView = document.getElementById('admin-view');
+                const btnText = document.getElementById('admin-btn-text');
+                const icon = document.getElementById('admin-icon');
+
+                if (isAdminView) {
+                    pubView.classList.add('hidden');
+                    admView.classList.remove('hidden');
+                    btnText.innerText = "Public Profile";
+                    icon.className = "fa-solid fa-eye text-rose-300 text-xs";
+                    renderRequests();
+                    renderAdminPackages();
+                } else {
+                    admView.classList.add('hidden');
+                    pubView.classList.remove('hidden');
+                    btnText.innerText = "Owner Dashboard";
+                    icon.className = "fa-solid fa-sliders text-amber-400 text-xs";
+                }
+            };
+
+            window.exitAdminView = () => {
+                if (isAdminView) window.toggleAdminMode();
+            };
+
+            window.switchToAdminTab = (tab) => {
+                if (!isAdminView) window.toggleAdminMode();
+
+                const secReq = document.getElementById('admin-sec-requests');
+                const secPkg = document.getElementById('admin-sec-packages');
+                const secSet = document.getElementById('admin-sec-settings');
+
+                const btnReq = document.getElementById('admin-tab-requests');
+                const btnPkg = document.getElementById('admin-tab-packages');
+                const btnSet = document.getElementById('admin-tab-settings');
+
+                secReq.classList.add('hidden');
+                secPkg.classList.add('hidden');
+                secSet.classList.add('hidden');
+
+                btnReq.className = "pb-2.5 px-3 text-xs sm:text-sm font-semibold text-gray-400 hover:text-rose-300 whitespace-nowrap";
+                btnPkg.className = "pb-2.5 px-3 text-xs sm:text-sm font-semibold text-gray-400 hover:text-rose-300 whitespace-nowrap";
+                btnSet.className = "pb-2.5 px-3 text-xs sm:text-sm font-semibold text-gray-400 hover:text-rose-300 whitespace-nowrap";
+
+                if (tab === 'requests') {
+                    secReq.classList.remove('hidden');
+                    btnReq.className = "pb-2.5 px-3 text-xs sm:text-sm font-semibold text-themeRose-400 border-b-2 border-themeRose-500 whitespace-nowrap";
+                } else if (tab === 'packages') {
+                    secPkg.classList.remove('hidden');
+                    btnPkg.className = "pb-2.5 px-3 text-xs sm:text-sm font-semibold text-themeRose-400 border-b-2 border-themeRose-500 whitespace-nowrap";
+                } else if (tab === 'settings') {
+                    secSet.classList.remove('hidden');
+                    btnSet.className = "pb-2.5 px-3 text-xs sm:text-sm font-semibold text-themeRose-400 border-b-2 border-themeRose-500 whitespace-nowrap";
+                }
+            };
+
+            window.filterRequests = (status) => {
+                currentFilter = status;
+                document.querySelectorAll('.req-filter-btn').forEach(btn => {
+                    if (btn.dataset.filter === status) {
+                        btn.className = "req-filter-btn px-3 py-1 rounded-full text-xs font-medium bg-themeRose-600 text-white";
+                    } else {
+                        btn.className = "req-filter-btn px-3 py-1 rounded-full text-xs font-medium bg-white/5 text-gray-300 hover:bg-white/10";
+                    }
+                });
+                renderRequests();
+            };
+
+            window.updateRequestStatus = async (id, newStatus) => {
+                if (useFirebase && db) {
+                    try {
+                        const reqRef = doc(db, 'artifacts', appId, 'public', 'data', 'requests', id);
+                        await updateDoc(reqRef, { status: newStatus });
+                        showToast(`Request marked as ${newStatus}`);
+                    } catch (err) {
+                        console.error("Update Request Error:", err);
+                    }
+                } else {
+                    const req = requestsState.find(r => r.id === id);
+                    if (req) {
+                        req.status = newStatus;
+                        saveLocalStorageState();
+                        renderRequests();
+                        showToast(`Request marked as ${newStatus}`);
+                    }
+                }
+            };
+
+            window.deleteRequest = async (id) => {
+                if (useFirebase && db) {
+                    try {
+                        const reqRef = doc(db, 'artifacts', appId, 'public', 'data', 'requests', id);
+                        await deleteDoc(reqRef);
+                        showToast("Proposal deleted");
+                    } catch (err) {
+                        console.error("Delete Request Error:", err);
+                    }
+                } else {
+                    requestsState = requestsState.filter(r => r.id !== id);
+                    saveLocalStorageState();
+                    renderRequests();
+                    showToast("Proposal deleted");
+                }
+            };
+
+            window.togglePackageForm = () => {
+                document.getElementById('package-form').classList.toggle('hidden');
+            };
+
+            window.handleSavePackage = async (e) => {
+                e.preventDefault();
+                const title = document.getElementById('pkg-input-title').value.trim();
+                const desc = document.getElementById('pkg-input-desc').value.trim();
+                const vibe = document.getElementById('pkg-input-vibe').value.trim();
+                const icon = document.getElementById('pkg-input-icon').value.trim() || 'fa-heart';
+
+                const newPkg = { title, desc, vibe, icon, active: true };
+
+                if (useFirebase && db) {
+                    try {
+                        const pkgId = 'pkg_' + Date.now();
+                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'packages', pkgId), newPkg);
+                    } catch (err) {
+                        console.error("Save Package Error:", err);
+                    }
+                } else {
+                    newPkg.id = 'pkg_' + Date.now();
+                    packagesState.push(newPkg);
+                    saveLocalStorageState();
+                    renderPublicPackages();
+                    renderAdminPackages();
+                }
+
+                document.getElementById('package-form').reset();
+                window.togglePackageForm();
+                showToast("New Date Experience added!");
+            };
+
+            window.togglePackageActive = async (id) => {
+                const pkg = packagesState.find(p => p.id === id);
+                if (!pkg) return;
+
+                const updatedStatus = pkg.active === false ? true : false;
+
+                if (useFirebase && db) {
+                    try {
+                        const pkgRef = doc(db, 'artifacts', appId, 'public', 'data', 'packages', id);
+                        await updateDoc(pkgRef, { active: updatedStatus });
+                    } catch (err) {
+                        console.error("Toggle Package Error:", err);
+                    }
+                } else {
+                    pkg.active = updatedStatus;
+                    saveLocalStorageState();
+                    renderPublicPackages();
+                    renderAdminPackages();
+                }
+            };
+
+            window.deletePackage = async (id) => {
+                if (useFirebase && db) {
+                    try {
+                        const pkgRef = doc(db, 'artifacts', appId, 'public', 'data', 'packages', id);
+                        await deleteDoc(pkgRef);
+                        showToast("Experience deleted");
+                    } catch (err) {
+                        console.error("Delete Package Error:", err);
+                    }
+                } else {
+                    packagesState = packagesState.filter(p => p.id !== id);
+                    saveLocalStorageState();
+                    renderPublicPackages();
+                    renderAdminPackages();
+                    showToast("Experience deleted");
+                }
+            };
+
+            window.handleSaveProfile = async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('edit-name').value.trim();
+                const age = document.getElementById('edit-age').value;
+                const location = document.getElementById('edit-location').value.trim();
+                const phone = document.getElementById('edit-phone').value.trim();
+                const avatar = document.getElementById('edit-avatar').value.trim();
+                const tagline = document.getElementById('edit-tagline').value.trim();
+                const bio = document.getElementById('edit-bio').value.trim();
+                const rawInterests = document.getElementById('edit-interests').value;
+                const interests = rawInterests.split(',').map(s => s.trim()).filter(Boolean);
+                const instagram = document.getElementById('edit-ig').value.trim();
+
+                const updatedProfile = {
+                    name, age, location, phone, avatar, tagline, bio, interests, instagram, configured: true
+                };
+
+                if (useFirebase && db) {
+                    try {
+                        const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'profile', 'main');
+                        await setDoc(profileRef, updatedProfile, { merge: true });
+                        showToast("Profile synced live to Firestore! ✨");
+                    } catch (err) {
+                        console.error("Save Profile Error:", err);
+                    }
+                } else {
+                    profileState = { ...profileState, ...updatedProfile };
+                    saveLocalStorageState();
+                    renderProfile();
+                    showToast("Profile settings saved locally! ✨");
+                }
+
+                document.getElementById('onboarding-banner').classList.add('hidden');
+            };
+
+            window.resetToDefaults = () => {
+                if (confirm("Reset profile data back to defaults?")) {
+                    profileState = { ...defaultProfile };
+                    packagesState = [ ...defaultPackages ];
+                    if (!useFirebase) saveLocalStorageState();
+                    renderAllViews();
+                    showToast("Data reset");
+                }
+            };
+
+            window.shareProfileLink = () => {
+                const dummy = document.createElement('input');
+                document.body.appendChild(dummy);
+                dummy.value = window.location.href;
+                dummy.select();
+                document.execCommand('copy');
+                document.body.removeChild(dummy);
+
+                showToast("Profile URL copied to clipboard! ✨");
+            };
+        }
+
+        function setMinDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('req-date').min = today;
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        // Initialize App
+        initApp();
+    </script>
+</body>
+</html>
